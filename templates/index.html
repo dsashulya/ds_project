@@ -215,8 +215,10 @@ $(".ingredients").on("click", "#deleteIngredient", function() {
         data : JSON.stringify(data),
         success : function(result) {
         appendRecipes(result)
-        },error : function(result){
-        console.log('failed');
+        },
+        error : function(result){
+            console.log(JSON.parse(result.responseText))
+        appendRecipes(result.responseText);
         }
     });
 })
