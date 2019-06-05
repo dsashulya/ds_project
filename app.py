@@ -68,9 +68,9 @@ def recommend():
             
             recipes_json.append({
                 'img': img if not pd.isnull(img) else "../static/noimage.png",
-                'title': title,
-                'link': link,
-                'ings': ings_list,
+                'title': title if not pd.isnull(title) else "-",
+                'link': link if not pd.isnull(link) else "#",
+                'ings': ings_list if not pd.isnull(ings) else "-",
                 'time': time if not pd.isnull(time) else "-"
             })
         
