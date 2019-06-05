@@ -4,7 +4,9 @@ from scipy import sparse
 from sklearn.cluster import KMeans
 import pickle 
 
-edamtx = sparse.csr_matrix(pd.read_csv('eda_log.csv'))
+edamtx = pd.read_csv('eda_log.csv')
+edamtx.drop(columns='Unnamed: 0', inplace=True)
+edamtx = sparse.csr_matrix(edamtx)
 
 kmeans = KMeans(n_clusters=50)
 kmeans.fit_predict(edamtx)
