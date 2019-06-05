@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+      crossorigin="anonymous"
+        />
+        <script   src="https://code.jquery.com/jquery-3.3.1.js"   integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="   crossorigin="anonymous"></script>
+        <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+        integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+        crossorigin="anonymous"
+        ></script>
+        <script
+        src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+        integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+        crossorigin="anonymous"
+        ></script>
+    </head>
+    <title>Рецепты</title>
+
+<body class='container'>
+        <legend class="border-bottom mb-4 mt-2">Найти рецепт по ингредиентам</legend>
+
+    <div class="row">
+    <div class="col-sm-4">
+        <form method="POST" action="/" enctype="multipart/form-data">
+            <div class="form-group form-inline">
+                <div class="row">
+                    <div class="col">
+                        Время:
+                    </div>
+                    <div class="col">
+                            <input class="form-control" name="time" type="text" placeholder="в минутах" required>
+                    </div>
+                </div>
+            </div>
+                <div class="ingredients">
+                    <div class="ingredients-0">
+                    <div class="form-group">
+                        
+                                <input name="ingredients" list="ingredients" class="custom-select" required>
+                                <datalist  id="ingredients">
+                                    
+                                    {% for key, ingredient in ingredients.items() %}
+                                        <option value="{{ingredient}}" id="{{ingredient}}">
+                                    {% endfor %}
+                                </datalist>
+                    </div>
+                    <div class="form-group form-inline ml-0">
+                        <div class="row">
+                        <div class="col">
+                            <input class="form-control" name="quantity" type="text" placeholder="количество" required>
+                            
+                    </div> 
+                    <div class="col">
+                        грамм
+                    </div>
+                </div>
+            </div>
+        </div>                
+    </div>
+    <div class="mb-4" id="addRecipe">
+                <a href="#" id="addIngredient">Добавить</a>
+            </div>
+    <div class="form-group">
+        <button class="btn btn-primary" type="submit">Найти</button>
+    </div>
+    </form>
+</div>
+
+<div class="col-sm-8">
+    {% for chunk in recipes%}
+        <div class="row">
+        {% for recipe in chunk %}
+
+        <div class="col">
+            <div class="card" id='card-{{row}}{{col}}' style="width: 18rem;">
+            <a href='{{recipe.link}}'><img src="{{recipe.img}}" class="card-img-top" onerror="this.onerror=null; this.src='../static/noimage.png'"></a>
+            <div class="card-body">
+            <h5 class="card-title">{{recipe.title}}</h5>
+            <ul>
+                
+                {% for ing in recipe.ings %}
+                <li>
+                    {{ing['name']}} {{ing['amount']}}
+                </li>
+                {% endfor %}
+                
+            </ul>
+            
+            </div>
+            </div>
+        </div>
+        
+        {% endfor %}
+    </div>
+</br>
+    {% endfor %}
+    
+</div>
+
+<script>
+var ingredients = {{ingredients|safe}}
+var keys = Object.keys(ingredients)
+
+appendRecipes = function(recipes) {
+
+};
+
+$("form").on("click", "#addIngredient", function() {
+    // if not too many
+    var children = $(".ingredients").children().length;
+    
+    
+        $(".ingredients").append(
+            $("<div>", {class: "ingredients-"+children}).append(
+            $("<div>", {class: "form-group"}).append(
+                $("<input>", {class: "custom-select",
+                                list: "ingredients",
+                                name: "ingredients"})).append(
+                    $("<datalist>", {id: "ingredients-"+children})
+                )).append($("<div>", {class: "form-group form-inline"}).append(
+                    $("<div>", {class: "row"}).append($("<div>", {class: "col"}).append(
+                    $("<input>", {class: "form-control",
+                            name: "quantity",
+                            type: "text", 
+                            placeholder: "количество",
+                            required: true})
+                )).append($("<div>", {class: "col"}).append(
+                    $('<a>', {href: "#",
+                            id: "deleteIngredient",
+                            text: "Удалить"})
+        )))));
+        
+        for (var i = 0; i<keys.length; i++) {
+            $("#ingredients-"+children).append(
+                $("<option>", {value: ingredients[keys[i]],
+                id: ingredients[keys[i]]})
+            )
+        }
+
+        
+        if(children >= 10) $(this).remove(); 
+        
+})
+
+$(".ingredients").on("click", "#deleteIngredient", function() {
+    $(this).parent().parent().parent().parent().remove()
+    // if length allows and there is no add link - add it
+    if ($(".ingredients").children().length <= 10 && !$("#addRecipe").children().length) {
+        $("#addRecipe").append(
+            $("<a>", {href: "#",
+                    id: "addIngredient",
+                    text: "Добавить"})
+        )
+    }
+})
+
+    $('form').submit(function(e) {
+        e.preventDefault();
+
+        var ingredients = [];
+        var quantity = [];
+        $('input[name=ingredients]').each(function(i, item) {
+            ingredients.push($(item).val())
+        });
+        $('input[name=quantity]').each(function(i, item) {
+            quantity.push(parseInt($(item).val()))
+        })
+        var data = {
+            'ingredients': ingredients,
+            'quantity': quantity
+        }
+        $.ajax({
+        type: 'POST',
+        contentType: 'application/json',
+        url: '/',
+        dataType : 'json',
+        data : JSON.stringify(data),
+        success : function(result) {
+        appendRecipes(result)
+        },error : function(result){
+        console.log('failed');
+        }
+    });
+})
+
+
+
+
+</script>
+
+<style>
+a, a:hover, a:visited, a:focus {
+    text-decoration: none;
+    color: darkblue;
+}
+</style>
+
+</body>
+</html>
