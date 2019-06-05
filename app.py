@@ -9,7 +9,7 @@ app.secret_key = b'\x8e\xd761u\xf2\xcc?\xac<\xd7+a\xc1\xc5\x12'
 model = pickle.load(open('model.pkl', 'rb'))
 
 eda = pd.read_csv('eda_total.csv')
-eda = eda.loc[:, ['img', 'title', 'link', 'ingredients', 'clusters']]
+eda = eda.loc[:, ['img', 'title', 'link', 'ingredients', 'time', 'clusters']]
 
 with open("ingredients_total.json", "r") as file:
     ingredients = json.load(file)
@@ -58,10 +58,10 @@ def recommend():
         
         recipes = eda[eda.clusters == prediction].sample(6)
         
-        recipes = recipes.loc[:, ['img', 'title', 'link', 'ingredients']]
+        recipes = recipes.loc[:, ['img', 'title', 'link', 'ingredients', 'time']]
         recipes_json = []
         
-        for img, title, link, ings in recipes.values:
+        for img, title, link, ings, time in recipes.values:
             ings_list = []
             for i in eval(ings):
                 ings_list.append(eval(i))
@@ -69,16 +69,19 @@ def recommend():
                 'img': img,
                 'title': title,
                 'link': link,
-                'ings': ings_list
+                'ings': ings_list,
+                'time': time
             })
         
         response = jsonify(recipes_json)
+        
+        # response.headers['Access-Control-Allow-Origin'] = '*'
         return response
-
+        
 
     recipes = eda.sample(6)
     recipes_json = []
-    for img, title, link, ings, _ in recipes.values:
+    for img, title, link, ings, time, _ in recipes.values:
         ings_list = []
         for i in eval(ings):
             ings_list.append(eval(i))
@@ -86,7 +89,8 @@ def recommend():
             'img': img,
             'title': title,
             'link': link,
-            'ings': ings_list
+            'ings': ings_list,
+            'time': time
         })
     
     return render_template('index.html', ingredients=ingredients,
