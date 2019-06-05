@@ -6,16 +6,18 @@ import pickle
 
 app = Flask(__name__)
 app.secret_key = b'\x8e\xd761u\xf2\xcc?\xac<\xd7+a\xc1\xc5\x12'
-# model = pickle.load(open('model.pkl', 'rb'))
+model = pickle.load(open('model.pkl', 'rb'))
 
 eda = pd.read_csv('eda_total.csv')
-eda = eda.loc[:, ['img', 'title', 'link', 'ingredients']]
+eda = eda.loc[:, ['img', 'title', 'link', 'ingredients', 'clusters']]
 
 with open("ingredients_total.json", "r") as file:
     ingredients = json.load(file)
 
 with open("ingredients_total_reversed.json", "r") as file:
     ingredients_reversed = json.load(file)
+
+cols = np.load('columns.npy')
 
 def chunks(l, n):
     """ yield successive chunks of size n from l """
@@ -27,11 +29,16 @@ def chunks(l, n):
 def recommend():
     if request.method == 'POST':
         data = request.get_json()
+        
         new_row = {}
         try:
-            new_row['time'] = int(data['time'])
+            new_row['minutes'] = int(data['time'])
         except:
             return 'wrong time format'
+        
+        new_data = pd.DataFrame(0, index=[0], columns=cols)
+        
+        
         for i in range(len(data['ingredients'])):
             key = int(ingredients_reversed[data['ingredients'][i]])
             try:
@@ -42,16 +49,36 @@ def recommend():
                 new_row[key] = value
             else:
                 new_row[key] += value
-        print(new_row)
-        response = jsonify(new_row)
-        response.headers['Access-Control-Allow-Origin'] = '*'
         
+        for key, value in new_row.items():
+            new_data[str(key)] = np.log(value) if value else 0
+        
+        
+        prediction = model.predict(new_data)[0]
+        
+        recipes = eda[eda.clusters == prediction].sample(6)
+        
+        recipes = recipes.loc[:, ['img', 'title', 'link', 'ingredients']]
+        recipes_json = []
+        
+        for img, title, link, ings in recipes.values:
+            ings_list = []
+            for i in eval(ings):
+                ings_list.append(eval(i))
+            recipes_json.append({
+                'img': img,
+                'title': title,
+                'link': link,
+                'ings': ings_list
+            })
+        
+        response = jsonify(recipes_json)
         return response
 
-        # prediction
+
     recipes = eda.sample(6)
     recipes_json = []
-    for img, title, link, ings in recipes.values:
+    for img, title, link, ings, _ in recipes.values:
         ings_list = []
         for i in eval(ings):
             ings_list.append(eval(i))
@@ -61,13 +88,6 @@ def recommend():
             'link': link,
             'ings': ings_list
         })
-    recipes = chunks(recipes_json, 2)
-    return render_template('index.html', ingredients=ingredients,
-                    recipes=recipes)
-
-
-
-
-        
-        
     
+    return render_template('index.html', ingredients=ingredients,
+                    recipes=recipes_json)
