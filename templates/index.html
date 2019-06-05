@@ -84,6 +84,8 @@
             <a href='{{recipes[i+j].link}}'><img src="{{recipes[i+j].img}}" class="card-img-top" onerror="this.onerror=null; this.src='../static/noimage.png'"></a>
             <div class="card-body" id='card-body-{{i}}{{j}}'>
                 <h5 class="card-title">{{recipes[i+j].title}}</h5>
+                <p><i>Время приготовления: 
+                    {{recipes[i+j].time}}</i></p>
                 <ul>
                     
                     {% for ing in recipes[i+j].ings %}
@@ -124,12 +126,13 @@ appendRecipes = function(recipes) {
                         id: "card-body-"+i+j}).append(
                 $("<h5>", {class: "card-title",
                         text: recipe.title})
-            ).append("<ul>", {class: "ul-"+i+j,
-                                id: "ul-"+i+j}))
-            ul = $($("#card-body-"+i+j).children()[1])
+            ).append($("<p>").append($("<i>", 
+            {text: "Время приготовления: "+recipe.time}))).
+            append($("<ul>", {id: "ul-"+i+j})))
+            
             for (var k = 0; k < recipe.ings.length; k++) {
                 
-                $(ul).append(
+                $("#ul-"+i+j).append(
                     $("<li>", {text: recipe.ings[k]['name']+" "+
                     recipe.ings[k]['amount']}))
             }
