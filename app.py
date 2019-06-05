@@ -65,12 +65,13 @@ def recommend():
             ings_list = []
             for i in eval(ings):
                 ings_list.append(eval(i))
+            
             recipes_json.append({
-                'img': img,
+                'img': img if not pd.isnull(img) else "../static/noimage.png",
                 'title': title,
                 'link': link,
                 'ings': ings_list,
-                'time': time
+                'time': time if not pd.isnull(time) else "-"
             })
         
         response = jsonify(recipes_json)
