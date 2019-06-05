@@ -75,25 +75,24 @@
 </div>
 
 <div class="col-sm-8">
-    {% for chunk in recipes%}
-        <div class="row">
-        {% for recipe in chunk %}
+    {% for i in range(0, 6, 2) %}
+    <div class="row">
+        {% for j in range(2) %}
 
         <div class="col">
-            <div class="card" id='card-{{row}}{{col}}' style="width: 18rem;">
-            <a href='{{recipe.link}}'><img src="{{recipe.img}}" class="card-img-top" onerror="this.onerror=null; this.src='../static/noimage.png'"></a>
-            <div class="card-body">
-            <h5 class="card-title">{{recipe.title}}</h5>
-            <ul>
-                
-                {% for ing in recipe.ings %}
-                <li>
-                    {{ing['name']}} {{ing['amount']}}
-                </li>
-                {% endfor %}
-                
-            </ul>
-            
+            <div class="card" id='card-{{i}}{{j}}' style="width: 18rem;">
+            <a href='{{recipes[i+j].link}}'><img src="{{recipes[i+j].img}}" class="card-img-top" onerror="this.onerror=null; this.src='../static/noimage.png'"></a>
+            <div class="card-body" id='card-body-{{i}}{{j}}'>
+                <h5 class="card-title">{{recipes[i+j].title}}</h5>
+                <ul>
+                    
+                    {% for ing in recipes[i+j].ings %}
+                    <li>
+                        {{ing['name']}} {{ing['amount']}}
+                    </li>
+                    {% endfor %}
+                    
+                </ul> 
             </div>
             </div>
         </div>
@@ -110,7 +109,34 @@ var ingredients = {{ingredients|safe}}
 var keys = Object.keys(ingredients)
 
 appendRecipes = function(recipes) {
-
+    for (var i = 0; i < 6; i += 2) {
+        for (var j = 0; j <= 1; j++) {
+            var recipe = recipes[i+j];
+            
+            card = $("#card-"+i+j);
+            $(card).empty().append(
+                $("<a>", {href: recipe.link}).append(
+                    $("<img>", {src: recipe.img,
+                    class: "card-img-top",
+                    onerror: "this.onerror=null; this.src='../static/noimage.png'"})
+                )
+            ).append($("<div>", {class: "card-body",
+                        id: "card-body-"+i+j}).append(
+                $("<h5>", {class: "card-title",
+                        text: recipe.title})
+            ).append("<ul>", {class: "ul-"+i+j,
+                                id: "ul-"+i+j}))
+            ul = $($("#card-body-"+i+j).children()[1])
+            for (var k = 0; k < recipe.ings.length; k++) {
+                
+                $(ul).append(
+                    $("<li>", {text: recipe.ings[k]['name']+" "+
+                    recipe.ings[k]['amount']}))
+            }
+            
+            
+        }
+    }
 };
 
 $("form").on("click", "#addIngredient", function() {
@@ -174,6 +200,7 @@ $(".ingredients").on("click", "#deleteIngredient", function() {
             quantity.push(parseInt($(item).val()))
         })
         var data = {
+            'time': $('input[name=time]').val(),
             'ingredients': ingredients,
             'quantity': quantity
         }
