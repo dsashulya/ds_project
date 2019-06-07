@@ -3,6 +3,7 @@ import numpy as np # to turn IN into array
 import pandas as pd
 import json
 import pickle
+from scipy.spatial.distance import pdist, squareform
 def SortFirst(val):
     return val[0]
 
@@ -36,8 +37,9 @@ def recommend():
         new_row = {}
         try:
             new_row['minutes'] = int(data['time'])
+            portions = int(data['portions']) if int(data['portions']) else 1
         except:
-            return 'wrong time format'
+            return 'wrong time or portions format'
         
         new_data = pd.DataFrame(0, index=[0], columns=cols)
         
@@ -49,40 +51,38 @@ def recommend():
             except:
                 continue
             if key not in new_row:
-                new_row[key] = value
+                new_row[str(key)] = value
             else:
-                new_row[key] += value
+                new_row[str(key)] += value
         
         for key, value in new_row.items():
-            new_data[str(key)] = np.log(value) if value else 0
-        
+            new_data[key] = np.log(value/portions) if value else 0
+        print(new_row)
         
         prediction = model.predict(new_data)[0]
-        #recipes = eda[eda.clusters == prediction].sample(6)
-
-        #recipes = recipes.loc[:, ['img', 'title', 'link', 'ingredients', 'time']]
+        print(prediction)
         dist_sort = [] 
-        recipes = eda[eda.clusters == prediction] 
-        index_df = recipes.loc[:, 'Unnamed: 0']
-        for i in range(0, recipes.shape[0]):
-            index_ = index_df.iloc[i] 
+        recipes = eda_log.iloc[eda[eda.clusters == prediction].index]
+        for index, row in recipes.iterrows():
             dist = 0
-            control = 0
-            for key in new_data:
-                if key in new_row and eda_log.loc[:, key][index_] != 0:
-                    dist += abs(min(new_row[key] - eda_log.loc[:, key][index_], 0))
-                    control += 1
+            for ingredient in recipes.columns:
+                if ingredient in new_row and row[ingredient] != 0:
+                    dist += abs(min(new_row[ingredient] - row[ingredient], 0))
                 else:
-                    dist +=  20 * eda_log.loc[:, key][index_]
-            if control >=1:
-                dist_sort += [(dist, i)] 
-        dist_sort.sort(key = SortFirst)
-        recipes_top = [key for value, key in dist_sort]
-        recipes_top_ = recipes_top[0:6]
-        recipes_ = recipes.iloc[recipes_top_, :] 
-        recipes__ = recipes_.loc[:, ['img', 'title', 'link', 'ingredients', 'time']]
-        recipes_json = []
+                    dist += 20 * row[ingredient]
+            dist_sort += [(dist, index)]
+        dist_sort.sort(key = lambda x: x[0])
+        print('finished dist_sort')
+        try:
+            recipes_top = dist_sort[:6]
+        except IndexError:
+            recipes_top = dist_sort
+        indexes = [x[1] for x in recipes_top]
+        print(f'indexes: {indexes}')
+        recipes__ = eda.loc[indexes, ['img', 'title', 'link', 'ingredients', 'time']]
         
+
+        recipes_json = []
         for img, title, link, ings, time in recipes__.values:
             ings_list = []
             for i in eval(ings):
