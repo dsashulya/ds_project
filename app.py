@@ -3,14 +3,17 @@ import numpy as np # to turn IN into array
 import pandas as pd
 import json
 import pickle
+def SortFirst(val):
+    return val[0]
 
 app = Flask(__name__)
 app.secret_key = b'\x8e\xd761u\xf2\xcc?\xac<\xd7+a\xc1\xc5\x12'
 model = pickle.load(open('model.pkl', 'rb'))
 
 eda = pd.read_csv('eda_total.csv')
-eda = eda.loc[:, ['img', 'title', 'link', 'ingredients', 'time', 'clusters']]
+eda = eda.loc[:, ['Unnamed: 0', 'img', 'title', 'link', 'ingredients', 'time', 'clusters']]
 
+eda_log = pd.read_csv('eda_log.csv')
 with open("ingredients_total.json", "r") as file:
     ingredients = json.load(file)
 
@@ -55,13 +58,32 @@ def recommend():
         
         
         prediction = model.predict(new_data)[0]
-        
-        recipes = eda[eda.clusters == prediction].sample(6)
-        
-        recipes = recipes.loc[:, ['img', 'title', 'link', 'ingredients', 'time']]
+        #recipes = eda[eda.clusters == prediction].sample(6)
+
+        #recipes = recipes.loc[:, ['img', 'title', 'link', 'ingredients', 'time']]
+        dist_sort = [] 
+        recipes = eda[eda.clusters == prediction] 
+        index_df = recipes.loc[:, 'Unnamed: 0']
+        for i in range(0, recipes.shape[0]):
+            index_ = index_df.iloc[i] 
+            dist = 0
+            control = 0
+            for key in new_data:
+                if key in new_row and eda_log.loc[:, key][index_] != 0:
+                    dist += abs(min(new_row[key] - eda_log.loc[:, key][index_], 0))
+                    control += 1
+                else:
+                    dist +=  20 * eda_log.loc[:, key][index_]
+            if control >=1:
+                dist_sort += [(dist, i)] 
+        dist_sort.sort(key = SortFirst)
+        recipes_top = [key for value, key in dist_sort]
+        recipes_top_ = recipes_top[0:6]
+        recipes_ = recipes.iloc[recipes_top_, :] 
+        recipes__ = recipes_.loc[:, ['img', 'title', 'link', 'ingredients', 'time']]
         recipes_json = []
         
-        for img, title, link, ings, time in recipes.values:
+        for img, title, link, ings, time in recipes__.values:
             ings_list = []
             for i in eval(ings):
                 ings_list.append(eval(i))
@@ -82,7 +104,7 @@ def recommend():
 
     recipes = eda.sample(6)
     recipes_json = []
-    for img, title, link, ings, time, _ in recipes.values:
+    for _, img, title, link, ings, time, _ in recipes.values:
         ings_list = []
         for i in eval(ings):
             ings_list.append(eval(i))
@@ -96,3 +118,6 @@ def recommend():
     
     return render_template('index.html', ingredients=ingredients,
                     recipes=recipes_json)
+
+if __name__ == '__main__':
+    app.run()
