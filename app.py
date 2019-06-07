@@ -67,7 +67,7 @@ def recommend():
             dist = 0
             for ingredient in recipes.columns:
                 if ingredient in new_row and row[ingredient] != 0:
-                    dist += abs(min(new_row[ingredient] - row[ingredient], 0))
+                    dist += abs(min(np.log(new_row[ingredient]) - row[ingredient], 0))
                 else:
                     dist += 20 * row[ingredient]
             dist_sort += [(dist, index)]
