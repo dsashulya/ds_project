@@ -40,6 +40,16 @@
                     </div>
                 </div>
             </div>
+            <div class="form-group form-inline">
+                <div class="row">
+                    <div class="col">
+                       Порции:
+                    </div>
+                    <div class="col">
+                            <input class="form-control" name="portions" type="text" placeholder="количество" required>
+                    </div>
+                </div>
+            </div>
                 <div class="ingredients">
                     <div class="ingredients-0">
                     <div class="form-group">
@@ -111,6 +121,7 @@ var ingredients = {{ingredients|safe}}
 var keys = Object.keys(ingredients)
 
 appendRecipes = function(recipes) {
+    
     for (var i = 0; i < 6; i += 2) {
         for (var j = 0; j <= 1; j++) {
             var recipe = recipes[i+j];
@@ -204,6 +215,7 @@ $(".ingredients").on("click", "#deleteIngredient", function() {
         })
         var data = {
             'time': $('input[name=time]').val(),
+            'portions': $('input[name=portions]').val(),
             'ingredients': ingredients,
             'quantity': quantity
         }
