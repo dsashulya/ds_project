@@ -57,7 +57,7 @@ def recommend():
         
         for key, value in new_row.items():
             new_data[key] = np.log(value/portions) if value else 0
-        print(new_row)
+        print(new_row
         
         prediction = model.predict(new_data)[0]
         print(prediction)
@@ -67,7 +67,7 @@ def recommend():
             dist = 0
             for ingredient in recipes.columns:
                 if ingredient in new_row and row[ingredient] != 0:
-                    dist += abs(min(np.log(new_row[ingredient]) - row[ingredient], 0))
+                    dist += abs(min(np.log(new_row[ingredient] / portions ) - row[ingredient], 0))
                 else:
                     dist += 20 * row[ingredient]
             dist_sort += [(dist, index)]
