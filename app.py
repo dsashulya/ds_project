@@ -3,6 +3,9 @@ import numpy as np # to turn IN into array
 import pandas as pd
 import json
 import pickle
+from scipy.spatial.distance import pdist, squareform
+def SortFirst(val):
+    return val[0]
 
 app = Flask(__name__)
 app.secret_key = b'\x8e\xd761u\xf2\xcc?\xac<\xd7+a\xc1\xc5\x12'
@@ -42,10 +45,7 @@ def recommend():
         
         
         for i in range(len(data['ingredients'])):
-            try:
-                key = int(ingredients_reversed[data['ingredients'][i]])
-            except KeyError:
-                return 'ingredient not on the list'
+            key = int(ingredients_reversed[data['ingredients'][i]])
             try:
                 value = int(data['quantity'][i])
             except:
@@ -65,12 +65,17 @@ def recommend():
         recipes = eda_log.iloc[eda[eda.clusters == prediction].index]
         for index, row in recipes.iterrows():
             dist = 0
+            count = 0
             for ingredient in recipes.columns:
                 if ingredient in new_row and row[ingredient] != 0:
                     dist += abs(min(np.log(new_row[ingredient] / portions ) - row[ingredient], 0))
+                    count += 1
                 else:
                     dist += 20 * row[ingredient]
-            dist_sort += [(dist, index)]
+            if count < 2:
+                dist_sort += [(3000.0 + dist, index)]
+            else:
+                dist_sort += [(dist, index)]
         dist_sort.sort(key = lambda x: x[0])
         print('finished dist_sort')
         try:
@@ -78,7 +83,7 @@ def recommend():
         except IndexError:
             recipes_top = dist_sort
         indexes = [x[1] for x in recipes_top]
-        
+        print(f'indexes: {indexes}')
         recipes__ = eda.loc[indexes, ['img', 'title', 'link', 'ingredients', 'time']]
         
 
